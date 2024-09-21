@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Website Scraper</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f4f9;
+    }
+    h1 {
+      color: #333;
+    }
+    form {
+      margin-bottom: 20px;
+    }
+    input[type="text"] {
+      width: 300px;
+      padding: 10px;
+      font-size: 1rem;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    pre {
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      background-color: #f0f0f0;
+      padding: 15px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      max-height: 300px;
+      overflow: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Website Scraper</h1>
+  <form id="scrape-form">
+    <label for="url">Enter Website URL:</label>
+    <input type="text" id="url" name="url" placeholder="https://example.com" required>
+    <button type="submit">Scrape</button>
+  </form>
+
+  <h2>Scraped HTML:</h2>
+  <pre id="scraped-html">Scraped content will appear here...</pre>
+
+  <script>
+    document.getElementById('scrape-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const url = document.getElementById('url').value;
+      const resultContainer = document.getElementById('scraped-html');
+      resultContainer.textContent = 'Scraping... Please wait.';
+
+      try {
+        // Make the API request
+        const response = await fetch(`https://api-scraper-nine.vercel.app/api/scrape?url=${encodeURIComponent(url)}`);
+
+        if (!response.ok) {
+          throw new Error('Failed to scrape the website. Make sure the URL is correct.');
+        }
+
+        const data = await response.json();
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data.html, 'text/html');
+
+        // Remove all <script> and <style> elements
+        const scripts = doc.querySelectorAll('script');
+        scripts.forEach(script => script.remove());
+
+        const styles = doc.querySelectorAll('style');
+        styles.forEach(style => style.remove());
+        
+        // Remove all spaces
+        doc.body.innerHTML = doc.body.innerHTML.replace(/\s+/g, ' ');
+
+        // Extract text content
+        const textContent = doc.body.textContent || 'No text content found.';
+
+        if (data.html) {
+          // Display the scraped HTML in the <pre> element
+            resultContainer.textContent = textContent;
+        } else {
+          resultContainer.textContent = 'No HTML found. Please try a different URL.';
+        }
+      } catch (error) {
+        resultContainer.textContent = `Error: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
